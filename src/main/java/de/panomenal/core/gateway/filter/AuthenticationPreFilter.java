@@ -21,7 +21,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.panomenal.core.gateway.data.ConnValidationResponse;
+import de.panomenal.core.gateway.data.VerifyResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -58,7 +58,7 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
                 return webClientBuilder.build().post()
                         .uri("lb://authenticationService/api/v1/auth/verify")
                         .header("Authenticated", bearerToken)
-                        .retrieve().bodyToMono(ConnValidationResponse.class)
+                        .retrieve().bodyToMono(VerifyResponse.class)
                         .map(response -> {
                             exchange.getRequest().mutate().header("username", response.getUsername());
                             exchange.getRequest().mutate().header("authorities", response.getAuthorities().stream()
@@ -80,7 +80,7 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
                                 errorCode = HttpStatus.BAD_GATEWAY;
                                 errorMsg = HttpStatus.BAD_GATEWAY.getReasonPhrase();
                             }
-                            // AuthorizationFilter.AUTH_FAILED_CODE
+                            // TODO: Map to ApiErrorResponse???
                             ServerHttpResponse response = exchange.getResponse();
                             byte[] responseBodyBytes = errorMsg.getBytes();
                             DataBuffer buffer = response.bufferFactory().wrap(responseBodyBytes);

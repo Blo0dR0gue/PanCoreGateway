@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @ToString
 @NoArgsConstructor
-public class ConnValidationResponse {
+public class VerifyResponse {
     private String status;
     private boolean isAuthenticated;
     private String username;
