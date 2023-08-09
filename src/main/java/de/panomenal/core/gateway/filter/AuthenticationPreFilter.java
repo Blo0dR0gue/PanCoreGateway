@@ -7,16 +7,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.panomenal.core.gateway.data.ConnValidationResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
@@ -33,6 +41,9 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
         super(Config.class);
         this.webClientBuilder = webClientBuilder;
     }
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public GatewayFilter apply(Config config) {
@@ -61,7 +72,7 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
                             if (error instanceof WebClientResponseException) {
                                 WebClientResponseException webCLientException = (WebClientResponseException) error;
                                 errorCode = (HttpStatus) webCLientException.getStatusCode();
-                                errorMsg = webCLientException.getLocalizedMessage();
+                                errorMsg = webCLientException.getResponseBodyAsString();
 
                             } else if (error instanceof WebClientRequestException) {
                                 errorMsg = error.getLocalizedMessage();
@@ -70,7 +81,12 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
                                 errorMsg = HttpStatus.BAD_GATEWAY.getReasonPhrase();
                             }
                             // AuthorizationFilter.AUTH_FAILED_CODE
-                            throw new RuntimeException(errorMsg);
+                            ServerHttpResponse response = exchange.getResponse();
+                            byte[] responseBodyBytes = errorMsg.getBytes();
+                            DataBuffer buffer = response.bufferFactory().wrap(responseBodyBytes);
+                            response.setStatusCode(errorCode);
+                            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            return response.writeWith(Mono.just(buffer));
                         });
             }
             return chain.filter(exchange);
