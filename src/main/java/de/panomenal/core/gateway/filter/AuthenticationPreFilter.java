@@ -42,9 +42,6 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
         this.webClientBuilder = webClientBuilder;
     }
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
@@ -53,7 +50,6 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
             log.info("URL is - " + request.getURI().getPath());
             String bearerToken = request.getHeaders().getFirst("Authenticated");
             log.info("Bearer Token: " + bearerToken);
-
             if (isSecured.test(request)) {
                 return webClientBuilder.build().post()
                         .uri("lb://authenticationService/api/v1/auth/verify")

@@ -38,7 +38,7 @@ public class GatewayConfig {
                 return builder.routes()
                                 .route("auth-service-route", r -> r.path("/authenticationService/**")
                                                 .filters(f -> f.rewritePath("/authenticationService(?<segment>/?.*)",
-                                                                "$\\{segment}")
+                                                                "/api/v1/auth$\\{segment}")
                                                                 .filter(authFilter.apply(
                                                                                 new AuthenticationPreFilter.Config())))
                                                 .uri("lb://authenticationService"))
