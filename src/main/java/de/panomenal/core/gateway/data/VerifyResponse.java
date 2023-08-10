@@ -14,5 +14,5 @@ public class VerifyResponse {
     private boolean isAuthenticated;
     private String username;
     private String token;
-    private List<String> authorities;
+    private List<Authorities> authorities;
 }

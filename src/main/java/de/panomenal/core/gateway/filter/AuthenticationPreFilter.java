@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import de.panomenal.core.gateway.data.Authorities;
 import de.panomenal.core.gateway.data.VerifyResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,17 +45,18 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
             ServerHttpRequest request = exchange.getRequest();
             log.info("**************************************************************************");
             log.info("URL is - " + request.getURI().getPath());
-            String bearerToken = request.getHeaders().getFirst("Authenticated");
+            String bearerToken = request.getHeaders().getFirst("Authorization");
             log.info("Bearer Token: " + bearerToken);
             if (isSecured.test(request)) {
                 return webClientBuilder.build().post()
                         .uri("lb://authenticationService/api/v1/auth/verify")
-                        .header("Authenticated", bearerToken)
+                        .header("Authorization", bearerToken)
                         .retrieve().bodyToMono(VerifyResponse.class)
                         .map(response -> {
                             exchange.getRequest().mutate().header("username", response.getUsername());
                             exchange.getRequest().mutate().header("authorities", response.getAuthorities().stream()
-                                    .reduce("", (a, b) -> a + "," + b));
+                                    .map(Authorities::getAuthority).reduce((a, b) -> a.isEmpty() ? b : a + "," + b)
+                                    .orElseThrow(() -> new RuntimeException("Error"))); // TODO handle custom error
 
                             return exchange;
                         }).flatMap(chain::filter).onErrorResume(error -> {
