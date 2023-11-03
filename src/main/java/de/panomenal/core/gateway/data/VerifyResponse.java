@@ -11,8 +11,7 @@ import lombok.ToString;
 @NoArgsConstructor
 public class VerifyResponse {
     private String status;
-    private boolean isAuthenticated;
+    private boolean authenticated;
     private String username;
-    private String token;
     private List<Authorities> authorities;
 }
