@@ -63,6 +63,8 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
                             log.info("Error Happened");
                             HttpStatus errorCode = null;
                             String errorMsg = "";
+                            // TODO: Handle different kind if errors like connection timeout,
+                            // apierrorresponse, ...
                             if (error instanceof WebClientResponseException) {
                                 WebClientResponseException webCLientException = (WebClientResponseException) error;
                                 errorCode = (HttpStatus) webCLientException.getStatusCode();
