@@ -42,6 +42,11 @@ public class GatewayConfig {
                                                                 .filter(authFilter.apply(
                                                                                 new AuthenticationPreFilter.Config())))
                                                 .uri("lb://authenticationService"))
+                                .route("test-service-route", r -> r.path("/testService/**").filters(
+                                                f -> f.rewritePath("/testService(?<segment>/?.*)", "/$\\{segment}")
+                                                                .filter(authFilter.apply(
+                                                                                new AuthenticationPreFilter.Config())))
+                                                .uri("lb://testService"))
                                 .build();
         }
 
